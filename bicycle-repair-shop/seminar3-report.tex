@@ -1,0 +1,174 @@
+\documentclass[12pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{listings}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single
+}
+
+\title{Seminar 3\\Object-Oriented Design, IV1350}
+\author{Your Name, your-email@kth.se}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\noindent \textbf{Project Members:}\\
+Your Name, your-email@kth.se
+
+\vspace{1em}
+
+\noindent \textbf{Declaration:}\\
+By submitting this assignment, it is hereby declared that all group members listed above have contributed to the solution. It is also declared that all project members fully understand all parts of the final solution and can explain it upon request.
+
+It is furthermore declared that no part of the solution has been copied from any other source, except for resources presented in the Canvas page for the course IV1350, and that no part of the solution has been provided by someone not listed as a project member above.
+
+\section{Introduction}
+
+In this seminar, the task was to implement and test a Java program for the \emph{Repair Electric Bike} scenario. The program implements the basic flow from the requirements specification. The user interface is represented by one \texttt{View} class with hard-coded calls to the controller, which is allowed by the task description.
+
+The implementation is based on the Seminar 2 design. The exported Astah model already contained the main packages and classes used in the program, such as \texttt{Main}, \texttt{View}, \texttt{Controller}, \texttt{RepairOrder}, \texttt{CustomerRegistry}, \texttt{RepairOrderRegistry}, \texttt{RegistryCreator}, and \texttt{Printer}. During implementation, some details were changed when the design had to become executable Java code.
+
+The source code is available here:
+\begin{center}
+\url{REPLACE-WITH-YOUR-PUBLIC-GIT-REPOSITORY-LINK}
+\end{center}
+
+\newpage
+\section{Method}
+
+I began by comparing the Seminar 2 design with the Seminar 3 implementation requirements. Since the design already followed the intended package structure, I kept the packages \texttt{startup}, \texttt{view}, \texttt{controller}, \texttt{model}, and \texttt{integration}.
+
+The program was then implemented in the same order as the basic flow. I first implemented startup in \texttt{Main}, then customer lookup, repair order creation, diagnostic reporting, repair task registration, customer approval, and repair order printing. This made it possible to run the program after each step through \texttt{View.sampleExecution()}.
+
+The implementation follows a layered structure. The \texttt{View} simulates user input and prints results. The \texttt{Controller} coordinates the use case. The model package contains the repair order and related data types. The integration package contains registries with hard-coded data and a printer object. Public declarations were documented with Javadoc comments, and method and variable names were chosen to describe their purpose clearly.
+
+Unit tests were written after the central behavior had been implemented. I chose to test \texttt{RepairOrder} and \texttt{CustomerRegistry}, since these classes contain behavior that is important to the flow and more interesting than simple getters.
+
+\section{Result}
+
+This chapter presents the implemented program, the most important changes compared to the design, a sample run, and the unit test result.
+
+\subsection{Overview of the Implementation}
+
+The final program is a small executable version of the basic flow. It starts in \texttt{Main}, creates the required startup objects, and runs a deterministic scenario through \texttt{View}. The customer and bike are found in \texttt{CustomerRegistry}. A \texttt{RepairOrder} is created, updated with a diagnostic report and repair tasks, accepted, and finally printed.
+
+The central model class is \texttt{RepairOrder}. It stores the diagnostic report and repair tasks, handles state changes, calculates total cost, and estimates the completion date. This keeps repair-order behavior in the model instead of placing it in the view or controller.
+
+\subsection{Changes Compared to the Seminar 2 Design}
+
+The implementation mostly follows the Seminar 2 design, but a few details were changed:
+
+\begin{itemize}[noitemsep]
+    \item Repair orders are updated by id instead of phone number or bike serial number. This avoids ambiguity if a customer has several repair orders.
+    \item \texttt{RepairOrderRegistry} stores completed \texttt{RepairOrder} objects instead of creating them from a long list of primitive parameters.
+    \item \texttt{CustomerDTO} contains a \texttt{BikeDTO}, since the customer registry must provide both customer and bike details.
+    \item \texttt{RepairOrder} changes to \texttt{READY\_FOR\_APPROVAL} when both a diagnostic report and at least one repair task have been added.
+    \item The repair order printout was expanded to include total cost and estimated completion date.
+\end{itemize}
+
+\subsection{Sample Run}
+
+The following is a shortened printout from a sample run. The repair order id and date can differ between runs.
+
+\begin{lstlisting}
+Search customer and bike
+Customer: Alex Lind
+Bike: Specialized Turbo Vado
+
+Create repair order
+Problem: The battery loses charge quickly.
+State: NEWLY_CREATED
+
+Technician updates repair order
+Diagnostic report: Battery cells are worn and brake sensor needs adjustment.
+State: READY_FOR_APPROVAL
+- Replace battery pack, 180 minutes, cost 3200
+- Adjust brake sensor, 45 minutes, cost 450
+
+Customer accepts repair order
+Total cost: 3650
+State: ACCEPTED
+
+Printed repair order
+Name: Alex Lind
+Email: alex@example.com
+Phone: 0701234567
+Brand: Specialized
+Model: Turbo Vado
+Serial Number: EB-1001
+Problem: The battery loses charge quickly.
+Diagnostic Report: Battery cells are worn and brake sensor needs adjustment.
+Total Cost: 3650
+Estimated Completion: 2026-05-01
+\end{lstlisting}
+
+\subsection{Unit Tests}
+
+The JUnit tests cover two classes. \texttt{RepairOrderJUnitTest} checks repair order state changes and total cost calculation. \texttt{CustomerRegistryJUnitTest} checks customer lookup and that the registry includes bike details.
+
+\begin{lstlisting}
+4 tests found
+4 tests started
+4 tests successful
+0 tests failed
+\end{lstlisting}
+
+\section{Discussion}
+
+This chapter evaluates the implementation using the seminar criteria.
+
+\subsection{MVC, Layers, and Responsibility Distribution}
+
+The program follows MVC and the Layer pattern in a simplified form. The view only calls the controller and prints results. The controller coordinates the flow but does not store customers or repair orders itself. The model contains repair-order behavior, and the integration layer handles lookup, storage, and printing.
+
+This division made the code easier to implement step by step. It also made the sample execution clear, since all use-case calls go through the controller.
+
+\subsection{Cohesion, Coupling, and Encapsulation}
+
+The solution has reasonably high cohesion. \texttt{RepairOrder} contains behavior that belongs to one repair order, \texttt{CustomerRegistry} handles customer lookup, \texttt{RepairOrderRegistry} handles repair order storage, and \texttt{Printer} handles printing.
+
+Coupling is fairly low because the view goes through the controller instead of using registries directly. The controller does depend on concrete registry classes and the printer, but this is acceptable in a small seminar program. In a larger system, interfaces could reduce that coupling.
+
+Encapsulation is also reasonable. Fields are private, DTOs are immutable, and \texttt{RepairOrder.getRepairTasks()} returns a copy of the task list. This prevents external code from directly changing the repair order's internal list.
+
+\subsection{Testing}
+
+The tests focus on behavior that is important for the implemented flow. The repair order tests check that the state becomes \texttt{READY\_FOR\_APPROVAL} at the correct time and that the total cost is calculated correctly. The customer registry tests check that existing customer data can be found and that bike data is included.
+
+The tests satisfy the minimum requirement of testing two classes. More tests could be added for \texttt{Controller}, \texttt{RepairOrderRegistry}, and additional repair order states.
+
+\subsection{Strengths and Weaknesses}
+
+A strength of the solution is that the program is executable and follows the basic flow clearly. The responsibility distribution is also close to the Seminar 2 design, while still adapting parts that became clearer during implementation.
+
+A weakness is that the view and registries use hard-coded data. This is allowed for the seminar, but a real system would need an interactive user interface and persistent storage. The estimated completion calculation is also simple and would need to be improved in a real repair shop.
+
+\section{How to Run}
+
+\begin{lstlisting}
+javac -d out $(Get-ChildItem -Path src -Recurse -Filter *.java | ForEach-Object { $_.FullName })
+java -cp out startup.Main
+
+javac -cp "out;lib\junit-platform-console-standalone-1.10.2.jar" -d test-out $(Get-ChildItem -Path test -Recurse -Filter *.java | ForEach-Object { $_.FullName })
+java -jar lib\junit-platform-console-standalone-1.10.2.jar execute --class-path "out;test-out" --select-class model.RepairOrderJUnitTest --select-class integration.CustomerRegistryJUnitTest
+\end{lstlisting}
+
+\section*{References}
+
+Course material for IV1350 Object-Oriented Design.
+
+Seminar 3 task description.
+
+Seminar 2 design model exported from Astah.
+
+AI was used to assist with wording and spelling in the report.
+
+\end{document}
